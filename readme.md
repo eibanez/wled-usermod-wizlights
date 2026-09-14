@@ -1,8 +1,14 @@
 # Controlling Wiz lights
 
-Enables controlling [WiZ](https://www.wizconnected.com/en/consumer/) lights that are part of the same network as the WLED controller.
+Enables controlling [WiZ](https://www.wizconnected.com/en/consumer/) lights that are part of the same network as the [WLED](https://kno.wled.ge/) controller.
 
 The mod takes the colors from the first few pixels and sends them to the lights.
+
+
+## Compilation
+
+Please refer to the [WLED documentation](https://kno.wled.ge/advanced/custom-features/#2-reference-it-locally-during-development) to include this mod in the compilation of WLED.
+
 
 ## Configuration
 
@@ -25,6 +31,14 @@ The mod takes the colors from the first few pixels and sends them to the lights.
 
 Next, enter the IP addresses for the lights to be controlled, in order. The limit is 15 devices, but that number
 can be easily changed by updating _MAX_WIZ_LIGHTS_.
+
+
+## Authors
+
+This WLED mod includes contributions by:
+
+- [@eibanez](https://github.com/eibanez)
+- [@ChuckMash](https://github.com/ChuckMash), when the mod was part of the WLED repository ([commit](https://github.com/wled/WLED/commit/099d2fd03de804b341f20681b13bba002a544b73))
 
 
 ## Related project
