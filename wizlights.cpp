@@ -2,8 +2,10 @@
 #include <WiFiUdp.h>
 #include "colors.h"
 
-// Maximum number of lights supported
-#define MAX_WIZ_LIGHTS 15
+// Maximum number of lights supported (defaults to 15)
+#ifndef WIZ_MAX_LIGHTS
+  #define WIZ_MAX_LIGHTS 15
+#endif
 
 WiFiUDP UDP;
 
@@ -21,9 +23,9 @@ class WizLightsUsermod : public Usermod {
     long warmWhite;
     long coldWhite;
 
-    IPAddress lightsIP[MAX_WIZ_LIGHTS];    // Stores light IP addresses
-    bool      lightsValid[MAX_WIZ_LIGHTS]; // Stores light IP address validity (string is formatted light an IP address)
-    uint32_t  colorsSent[MAX_WIZ_LIGHTS];  // Stores last color sent for each light
+    IPAddress lightsIP[WIZ_MAX_LIGHTS];    // Stores light IP addresses
+    bool      lightsValid[WIZ_MAX_LIGHTS]; // Stores light IP address validity (string is formatted light an IP address)
+    uint32_t  colorsSent[WIZ_MAX_LIGHTS];  // Stores last color sent for each light
 
   public:
     // Send JSON message to WiZ Light over UDP (RGB or C/W white)
@@ -94,7 +96,7 @@ class WizLightsUsermod : public Usermod {
         // Track whether any of the lights were updated in this pass
         bool update = false;
         
-        for (uint8_t i = 0; i < MAX_WIZ_LIGHTS; i++) {
+        for (uint8_t i = 0; i < WIZ_MAX_LIGHTS; i++) {
           // Skip lights without a valid IP address
           if (!lightsValid[i]) continue;
 
@@ -125,7 +127,7 @@ class WizLightsUsermod : public Usermod {
       top["Always Force Update"]          = forceUpdate;
       top["Force Update Every x Minutes"] = forceUpdateMinutes;
       
-      for (uint8_t i = 0; i < MAX_WIZ_LIGHTS; i++) {
+      for (uint8_t i = 0; i < WIZ_MAX_LIGHTS; i++) {
         top[getJsonLabel(i)] = lightsIP[i].toString();
       }
     }
@@ -145,7 +147,7 @@ class WizLightsUsermod : public Usermod {
       
       // Read list of IPs
       String tempIp;
-      for (uint8_t i = 0; i < MAX_WIZ_LIGHTS; i++) {
+      for (uint8_t i = 0; i < WIZ_MAX_LIGHTS; i++) {
         configComplete &= getJsonValue(top[getJsonLabel(i)], tempIp, "0.0.0.0");
         lightsValid[i] = lightsIP[i].fromString(tempIp);
         

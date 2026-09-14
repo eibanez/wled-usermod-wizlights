@@ -2,15 +2,27 @@
 
 Enables controlling [WiZ](https://www.wizconnected.com/en/consumer/) lights that are part of the same network as the [WLED](https://kno.wled.ge/) controller.
 
-The mod takes the colors from the first few pixels and sends them to the lights.
+The usermod takes the colors from the first few pixels and sends them to the lights.
 
 
 ## Compilation
 
 Please refer to the [WLED documentation](https://kno.wled.ge/advanced/custom-features/#2-reference-it-locally-during-development) to include this mod in the compilation of WLED.
 
+### Changing the number of lights
+
+The usermod will default to maximum of 15 Wiz lights. That value can be overridden during the compilation of WLED by setting, for example:
+
+```
+-D WIZ_MAX_LIGHTS=20
+```
+
 
 ## Configuration
+
+The configuration can be found under the Usermods entry in the Setting menu.
+
+It provides access to the following parameters:
 
 - Interval (ms)
     - How frequently to update the WiZ lights, in milliseconds.
@@ -29,16 +41,15 @@ Please refer to the [WLED documentation](https://kno.wled.ge/advanced/custom-fea
     - Adjusts the default force update timeout of 5 minutes.
     - Setting to 0 is the same as enabling Always Force Update
 
-Next, enter the IP addresses for the lights to be controlled, in order. The limit is 15 devices, but that number
-can be easily changed by updating _MAX_WIZ_LIGHTS_.
+Next, enter the IP addresses for the lights to be controlled, in order. Use as many entries as you need and leave the rest set to the default values. To increase the limit of lights that can be access by the usermod, please see the Compilation section above.
 
 
 ## Authors
 
-This WLED mod includes contributions by:
+This WLED usermod includes contributions by:
 
 - [@eibanez](https://github.com/eibanez)
-- [@ChuckMash](https://github.com/ChuckMash), when the mod was part of the WLED repository ([commit](https://github.com/wled/WLED/commit/099d2fd03de804b341f20681b13bba002a544b73))
+- [@ChuckMash](https://github.com/ChuckMash), when the usermod was part of the WLED repository ([commit](https://github.com/wled/WLED/commit/099d2fd03de804b341f20681b13bba002a544b73))
 
 
 ## Related project
