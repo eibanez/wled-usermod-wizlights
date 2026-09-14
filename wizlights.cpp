@@ -82,8 +82,6 @@ class WizLightsUsermod : public Usermod {
 
     // The loop() colors updates the light colors
     void loop() {
-      // TODO: Check millis() rollover
-      
       // Make sure we are connected first
       if (!WLED_CONNECTED) return;
 
@@ -98,19 +96,19 @@ class WizLightsUsermod : public Usermod {
         
         for (uint8_t i = 0; i < MAX_WIZ_LIGHTS; i++) {
           // Skip lights without a valid IP address
-          if (!lightsValid[i]) { continue; }
+          if (!lightsValid[i]) continue;
 
           // Get color for this light
           uint32_t newColor = strip.getPixelColor(i);
 
           // Update Wiz light color, if necessary
-          if (forceUpdate || (newColor != colorsSent[i]) || (ellapsedTime > forceUpdateMinutes*60000)){
+          if (forceUpdate || (newColor != colorsSent[i]) || (ellapsedTime > forceUpdateMinutes*60000)) {
             wizSendColor(lightsIP[i], newColor, useGammaCorrection);
             colorsSent[i] = newColor;
             update = true;
             delay(sendDelay);
-            }
           }
+        }
         
         if (update) lastTime = millis();
       }
