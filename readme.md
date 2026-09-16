@@ -7,7 +7,7 @@ The usermod takes the colors from the first few pixels and sends them to the lig
 
 ## Compilation
 
-Please refer to the [WLED documentation](https://kno.wled.ge/advanced/custom-features/#2-reference-it-locally-during-development) to include this mod in the compilation of WLED.
+Please refer to the [WLED documentation](https://kno.wled.ge/advanced/custom-features/#2-reference-it-locally-during-development) to include this usermod in the compilation of WLED.
 
 ### Changing the number of lights
 
@@ -20,28 +20,34 @@ The usermod will default to maximum of 15 Wiz lights. That value can be overridd
 
 ## Configuration
 
-The configuration can be found under the Usermods entry in the Setting menu.
+### Setting up the Wiz lights in WLED
 
-It provides access to the following parameters:
+Go to settings section of WLED and navigate to [LED Preferences](https://kno.wled.ge/features/settings/#led-preferences). In there, add a new [LED output](https://kno.wled.ge/features/settings/#led-outputs) with the following settings:
+- **Type**: Select a string type that supports
+- **Length**: Equal to the number of Wiz lights you are going to use
+- **Data GPIO**: Enter an output that is not used (because WLED will communicate with the Wiz lights through Wi-Fi)
 
-- Interval (ms)
-    - How frequently to update the WiZ lights, in milliseconds.
+
+### wizlights usermod parameters
+
+The usermod configuration can be found under the Usermods entry in the Setting menu. It provides access to the following parameters:
+
+
+
+- `Interval (ms)`
+    - How frequently to update the Wiz lights, in milliseconds.
     - Setting it too low may cause the ESP to become unresponsive.
-- Send Delay (ms)
-    - An optional millisecond delay after updating each WiZ light. 
-    - Can help smooth out effects when using a large number of WiZ lights
-- Use Enhanced White
-    - Uses the WiZ lights onboard white LEDs instead of sending maximum RGB values.
-    - Tunable with warm and cool LEDs as supported by WiZ bulbs
-    - Note: Only sent when max RGB value is set, the automatic brightness limiter must be disabled
-    - ToDo: Have better logic for white value mixing to take advantage of the light's capabilities
-- Always Force Update
-    - Can be enabled to always send update message to light even if the new value matches the old value.
-- Force update every x minutes
+- `Send Delay (ms)`
+    - An optional millisecond delay after updating each Wiz light. 
+    - Can help smooth out effects when using a large number of Wiz lights
+    - Not recommended if the ESP drives both Wiz lights and other lights, as it will slow down the overall frame rate
+- `Always Force Update`
+    - WLED will always send updates to the Wiz lights, even if the color has not changed
+- `Force update every x minutes`
     - Adjusts the default force update timeout of 5 minutes.
-    - Setting to 0 is the same as enabling Always Force Update
+    - Setting to 0 is the same as enabling `Always Force Update`
 
-Next, enter the IP addresses for the lights to be controlled, in order. Use as many entries as you need and leave the rest set to the default values. To increase the limit of lights that can be access by the usermod, please see the Compilation section above.
+Finally, enter the IP addresses for the lights to be controlled, in the order they will be treated by WLED. Use as many entries as you need and leave the rest set to the default values. To increase the limit of lights that can be access by the usermod, please see the Compilation section above.
 
 
 ## Authors
