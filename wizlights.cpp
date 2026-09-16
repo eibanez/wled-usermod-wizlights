@@ -31,18 +31,16 @@ class WizLightsUsermod : public Usermod {
   public:
     // Get color and CCT data for the pixel representing a Wiz light
     void getPixelData(uint8_t pix, uint32_t &color, uint8_t &cct) {
-      // Use color gamma correction if enabled, not in realtime mode with gamma disabled or currently overriding RT mode
-      //   NOTE: This condition is the same used inside the WLED code
-      bool useGammaCorrection = gammaCorrectCol && !(realtimeMode && arlsDisableGammaCorrection && !realtimeOverride);
-
       // Get color for the pixel
-      uint32_t newColor = strip.getPixelColor(i);
+      color = strip.getPixelColor(pix);
 
       // Get CCT and color correct, unless the color is black (off)
       cct = 0;
       if (color != BLACK) {
-        // Color correct
-        if (gammaCorrect) color = gamma32(color);
+        // Use color gamma correction if enabled, not in realtime mode with gamma disabled or currently overriding RT mode
+        //   NOTE: This condition is the same used inside the WLED code
+        bool useGammaCorrection = gammaCorrectCol && !(realtimeMode && arlsDisableGammaCorrection && !realtimeOverride);
+        if (useGammaCorrection) color = gamma32(color);
         
         // Find the segment the pixel belongs to
         for (unsigned i = 0; i < strip.getSegmentsNum(); i++) {
@@ -72,17 +70,17 @@ class WizLightsUsermod : public Usermod {
         unsigned w = W(color);
         
         // Linear blend of warm and cold white (to avoid overheating the light bulb)
-        //  CCT: 0 - full warm white, 255 - full cold white
+        //   CCT: 0 - full warm white, 255 - full cold white
         uint8_t ww = ((255 - seg.cct) * w) / 255;
         uint8_t cw = (seg.cct * w) / 255;
 
         // Send color information (red, green, blue, warm white, cold white)
         UDP.print("{\"method\":\"setPilot\",\"params\":{\"r\":");
-        UDP.print(R(color2));
+        UDP.print(R(color));
         UDP.print(",\"g\":");
-        UDP.print(G(color2));
+        UDP.print(G(color));
         UDP.print(",\"b\":");
-        UDP.print(B(color2));
+        UDP.print(B(color));
         UDP.print(",\"w\":");
         UDP.print(ww);
         UDP.print(",\"c\":");
