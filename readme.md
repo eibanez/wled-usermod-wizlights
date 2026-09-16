@@ -29,13 +29,16 @@ Go to settings section of WLED and navigate to [LED Preferences](https://kno.wle
 - **Data GPIO**: Enter an output that is not used
   - WLED will not use this output and will communicate with the Wiz lights through Wi-Fi instead
 
+Make a note of the value in the **Start** field; it will come in handy later.
+
 
 ### wizlights usermod parameters
 
 The configuration can be found under the Usermods entry in the Setting menu. It provides access to the following parameters:
 
-
-
+- `LED Offset`
+    - Enter the **Start** value for the LED output that represents the Wiz lights
+    - Defaults to 0, which assumes that the Wiz lights start with the first light in WLED
 - `Interval (ms)`
     - How frequently to update the Wiz lights, in milliseconds.
     - Setting it too low may cause the ESP to become unresponsive.
@@ -58,6 +61,7 @@ This WLED usermod includes contributions by:
 
 - [@eibanez](https://github.com/eibanez)
 - [@ChuckMash](https://github.com/ChuckMash), when the usermod was part of the WLED repository ([commit](https://github.com/wled/WLED/commit/099d2fd03de804b341f20681b13bba002a544b73))
+- [@DodoSeal](https://github.com/DodoSeal), for the code behind the "LED Offset" parameter proposed in the WLED repository ([PR](https://github.com/wled/WLED/pull/5260/))
 
 
 ## Related project
