@@ -55,7 +55,7 @@ class WizLightsUsermod : public Usermod {
             if (!bus || !bus->isOk()) break;
             if (bus->containsPixel(index)) {
               if (bus->hasWhite() && bus->hasCCT()) {
-                bus->calculateCCT(c, ww, cw);
+                bus->calculateCCT(color2, ww, cw);
               }
               break;
             }
