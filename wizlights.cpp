@@ -25,9 +25,37 @@ class WizLightsUsermod : public Usermod {
 
     IPAddress lightsIP[WIZ_MAX_LIGHTS];    // Stores light IP addresses
     bool      lightsValid[WIZ_MAX_LIGHTS]; // Stores light IP address validity (string is formatted light an IP address)
-    uint32_t  colorsSent[WIZ_MAX_LIGHTS];  // Stores last color sent for each light
+    uint32_t  colorSent[WIZ_MAX_LIGHTS];   // Stores last color sent for each light
+    uint8_t   cctSent[WIZ_MAX_LIGHTS];     // Stores last CCT sent for each light
 
   public:
+    // Get color and CCT data for the pixel representing a Wiz light
+    void getPixelData(uint8_t pix, uint32_t &color, uint8_t &cct) {
+      // Use color gamma correction if enabled, not in realtime mode with gamma disabled or currently overriding RT mode
+      //   NOTE: This condition is the same used inside the WLED code
+      bool useGammaCorrection = gammaCorrectCol && !(realtimeMode && arlsDisableGammaCorrection && !realtimeOverride);
+
+      // Get color for the pixel
+      uint32_t newColor = strip.getPixelColor(i);
+
+      // Get CCT and color correct, unless the color is black (off)
+      cct = 0;
+      if (color != BLACK) {
+        // Color correct
+        if (gammaCorrect) color = gamma32(color);
+        
+        // Find the segment the pixel belongs to
+        for (unsigned i = 0; i < strip.getSegmentsNum(); i++) {
+          Segment& seg = strip.getSegment(i);
+          
+          if (pix >= seg.start && pix <= seg.stop) {
+            cct = seg.cct;
+            break;  // No need to look in other segments
+          }
+        }
+      }
+    }
+
     // Send JSON message to WiZ Light over UDP (RGB or C/W white)
     void wizSendColor(IPAddress ip, uint8_t pix, uint32_t color, bool gammaCorrect) {
       // Start UDP packet
@@ -40,28 +68,13 @@ class WizLightsUsermod : public Usermod {
 
       // Send color as RGB  
       } else {
-        // Use gamma color correction, as needed
-        uint32_t color2 = color;
-        if (gammaCorrect) color2 = gamma32(color2);
-
-        // Variables to calculate warm-white and cold-white values
-        uint8_t ww = 0, cw = 0;
-
-        // Find the segment the pixel belongs to
-        for (unsigned i = 0; i < strip.getSegmentsNum(); i++) {
-          Segment& seg = strip.getSegment(i);
-          
-          if (pix >= seg.start && pix <= seg.stop) {
-            unsigned w = W(color2);   // Grab white to adjust for brightness
-            
-            // Linear blend (to avoid overheating the light bulb)
-            //  CCT: 0 - full warm white, 255 - full cold white
-            ww = ((255 - seg.cct) * w) / 255;
-            cw = (seg.cct * w) / 255;
-            
-            break;  // No need to look in other segments
-          }
-        }
+        // Pull white value (to adjust for brightness)
+        unsigned w = W(color);
+        
+        // Linear blend of warm and cold white (to avoid overheating the light bulb)
+        //  CCT: 0 - full warm white, 255 - full cold white
+        uint8_t ww = ((255 - seg.cct) * w) / 255;
+        uint8_t cw = (seg.cct * w) / 255;
 
         // Send color information (red, green, blue, warm white, cold white)
         UDP.print("{\"method\":\"setPilot\",\"params\":{\"r\":");
@@ -90,10 +103,6 @@ class WizLightsUsermod : public Usermod {
     void loop() {
       // Make sure we are connected first
       if (!WLED_CONNECTED) return;
-
-      // Use color gamma correction if enabled, not in realtime mode with gamma disabled or currently overriding RT mode
-      //   NOTE: This condition is the same used inside the WLED code
-      bool useGammaCorrection = gammaCorrectCol && !(realtimeMode && arlsDisableGammaCorrection && !realtimeOverride);
       
       unsigned long ellapsedTime = millis() - lastTime;
       if (ellapsedTime > updateInterval) {
@@ -104,13 +113,16 @@ class WizLightsUsermod : public Usermod {
           // Skip lights without a valid IP address
           if (!lightsValid[i]) continue;
 
-          // Get color for this light
-          uint32_t newColor = strip.getPixelColor(i);
+          // Get color and CCT for this light
+          uint32_t newColor;
+          uint8_t newCct;
+          getPixelData(i, uint32_t &newColor, uint8_t &newCct);
 
           // Update Wiz light color, if necessary
-          if (forceUpdate || (newColor != colorsSent[i]) || (ellapsedTime > forceUpdateMinutes*60000)) {
-            wizSendColor(lightsIP[i], i, newColor, useGammaCorrection);
-            colorsSent[i] = newColor;
+          if (forceUpdate || (newColor != colorSent[i]) || (newCct != cctSent[i]) || (ellapsedTime > forceUpdateMinutes*60000)) {
+            wizSendColor(lightsIP[i], i, newColor, newCct);
+            colorSent[i] = newColor;
+            cctSent[i] = newCct;
             update = true;
             delay(sendDelay);
           }
