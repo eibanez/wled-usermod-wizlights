@@ -29,33 +29,14 @@ class WizLightsUsermod : public Usermod {
 
   public:
     // Send JSON message to WiZ Light over UDP (RGB or C/W white)
-    void wizSendColor(IPAddress ip, uint32_t color, bool gammaCorrect) {
+    void wizSendColor(IPAddress ip, uint8_t pix, uint32_t color, bool gammaCorrect) {
       // Start UDP packet
       UDP.beginPacket(ip, 38899);
 
       // If color is black, turn light off
       //   NOTE: Wiz light setting for "Off fade-out" will be applied by the light itself
-      if (color == 0) { 
+      if (color == BLACK) { 
         UDP.print("{\"method\":\"setPilot\",\"params\":{\"state\":false}}");
-
-      // If color is white, try and use the lights WHITE LEDs instead of mixing RGB LEDs
-      } else if (color == 16777215 && useEnhancedWhite) {
-        // TODO: Better utilize WLED existing white mixing logic
-
-        // Set cold white light only
-        if (coldWhite > 0 && warmWhite == 0) {
-          UDP.print("{\"method\":\"setPilot\",\"params\":{\"c\":"); UDP.print(coldWhite) ;UDP.print("}}");
-        }
-          
-        // Set warm white light only
-        if (warmWhite > 0 && coldWhite == 0) {
-          UDP.print("{\"method\":\"setPilot\",\"params\":{\"w\":"); UDP.print(warmWhite) ;UDP.print("}}");
-        }
-          
-        // Set combination of warm and cold white light
-        if (coldWhite > 0 && warmWhite > 0) {
-          UDP.print("{\"method\":\"setPilot\",\"params\":{\"c\":"); UDP.print(coldWhite) ;UDP.print(",\"w\":"); UDP.print(warmWhite); UDP.print("}}");
-        }
 
       // Send color as RGB  
       } else {
@@ -63,16 +44,38 @@ class WizLightsUsermod : public Usermod {
         uint32_t color2 = color;
         if (gammaCorrect) color2 = gamma32(color2);
 
-        // Send RBG information
+        // Variables to calculate warm-white and cold-white values
+        uint8_t ww = 0, cw = 0;
+
+        // Find bus where the 
+        unsigned index = strip.getMappedPixelIndex(pix); // convert logical address to physical
+        if (index != 0xFFFF) {  // Avoid invalid/missing pixel
+          for (unsigned b = 0; b < BusManager::getNumBusses(); b++) {
+            const Bus *bus = BusManager::getBus(b);
+            if (!bus || !bus->isOk()) break;
+            if (bus->containsPixel(index)) {
+              if (bus->hasWhite() && bus->hasCCT()) {
+                bus->calculateCCT(c, ww, cw);
+              }
+              break;
+            }
+          }
+        }
+
+        // Send color information (red, green, blue, warm white, cold white)
         UDP.print("{\"method\":\"setPilot\",\"params\":{\"r\":");
         UDP.print(R(color2));
         UDP.print(",\"g\":");
         UDP.print(G(color2));
         UDP.print(",\"b\":");
         UDP.print(B(color2));
+        UDP.print(",\"w\":");
+        UDP.print(ww);
+        UDP.print(",\"c\":");
+        UDP.print(cw);
         UDP.print("}}");
       }
-    
+
       // Finish UDP packet
       UDP.endPacket();
     }
@@ -105,7 +108,7 @@ class WizLightsUsermod : public Usermod {
 
           // Update Wiz light color, if necessary
           if (forceUpdate || (newColor != colorsSent[i]) || (ellapsedTime > forceUpdateMinutes*60000)) {
-            wizSendColor(lightsIP[i], newColor, useGammaCorrection);
+            wizSendColor(lightsIP[i], i, newColor, useGammaCorrection);
             colorsSent[i] = newColor;
             update = true;
             delay(sendDelay);
