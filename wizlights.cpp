@@ -116,7 +116,7 @@ class WizLightsUsermod : public Usermod {
           // Get color and CCT for this light
           uint32_t newColor;
           uint8_t newCct;
-          getPixelData(i, uint32_t &newColor, uint8_t &newCct);
+          getPixelData(i, newColor, newCct);
 
           // Update Wiz light color, if necessary
           if (forceUpdate || (newColor != colorSent[i]) || (newCct != cctSent[i]) || (ellapsedTime > forceUpdateMinutes*60000)) {
