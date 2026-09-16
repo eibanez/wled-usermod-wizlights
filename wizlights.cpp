@@ -52,12 +52,12 @@ class WizLightsUsermod : public Usermod {
           Segment& seg = strip.getSegment(i);
           
           if (pix >= seg.start && pix <= seg.stop) {
-            unsigned cct seg.cct;     // 0 - full warm white, 255 - full cold white
             unsigned w = W(color2);   // Grab white to adjust for brightness
             
-            // Linear blend (to avoid overheating the light bulb
-            ww = ((255 - cct) * w) / 255;
-            cw = (cct * w) / 255;
+            // Linear blend (to avoid overheating the light bulb)
+            //  CCT: 0 - full warm white, 255 - full cold white
+            ww = ((255 - seg.cct) * w) / 255;
+            cw = (seg.cct * w) / 255;
             
             break;  // No need to look in other segments
           }
