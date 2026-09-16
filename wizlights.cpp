@@ -47,18 +47,19 @@ class WizLightsUsermod : public Usermod {
         // Variables to calculate warm-white and cold-white values
         uint8_t ww = 0, cw = 0;
 
-        // Find bus where the 
-        unsigned index = strip.getMappedPixelIndex(pix); // convert logical address to physical
-        if (index != 0xFFFF) {  // Avoid invalid/missing pixel
-          for (unsigned b = 0; b < BusManager::getNumBusses(); b++) {
-            const Bus *bus = BusManager::getBus(b);
-            if (!bus || !bus->isOk()) break;
-            if (bus->containsPixel(index)) {
-              if (bus->hasWhite() && bus->hasCCT()) {
-                bus->calculateCCT(color2, ww, cw);
-              }
-              break;
-            }
+        // Find the segment the pixel belongs to
+        for (unsigned i = 0; i < strip.getSegmentsNum(); i++) {
+          Segment& seg = strip.getSegment(i);
+          
+          if (pix >= seg.start && pix <= seg.stop) {
+            unsigned cct seg.cct;     // 0 - full warm white, 255 - full cold white
+            unsigned w = W(color2);   // Grab white to adjust for brightness
+            
+            // Linear blend (to avoid overheating the light bulb
+            ww = ((255 - cct) * w) / 255;
+            cw = (cct * w) / 255;
+            
+            break;  // No need to look in other segments
           }
         }
 
