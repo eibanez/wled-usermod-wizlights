@@ -23,14 +23,16 @@ The usermod will default to maximum of 15 Wiz lights. That value can be overridd
 ### Setting up the Wiz lights in WLED
 
 Go to settings section of WLED and navigate to [LED Preferences](https://kno.wled.ge/features/settings/#led-preferences). In there, add a new [LED output](https://kno.wled.ge/features/settings/#led-outputs) with the following settings:
-- **Type**: Select a string type that supports
+- **Type**: Select a string type that supports RGBCCT
+  - For example, `FW1906/WS2811 RGBCCT`
 - **Length**: Equal to the number of Wiz lights you are going to use
-- **Data GPIO**: Enter an output that is not used (because WLED will communicate with the Wiz lights through Wi-Fi)
+- **Data GPIO**: Enter an output that is not used
+  - WLED will not use this output and will communicate with the Wiz lights through Wi-Fi instead
 
 
 ### wizlights usermod parameters
 
-The usermod configuration can be found under the Usermods entry in the Setting menu. It provides access to the following parameters:
+The configuration can be found under the Usermods entry in the Setting menu. It provides access to the following parameters:
 
 
 
