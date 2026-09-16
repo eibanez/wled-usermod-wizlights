@@ -13,15 +13,11 @@ class WizLightsUsermod : public Usermod {
   
   private:
     unsigned long lastTime = 0;
+
     long updateInterval;
     long sendDelay;
-    
     long forceUpdateMinutes;
     bool forceUpdate;
-
-    bool useEnhancedWhite;
-    long warmWhite;
-    long coldWhite;
 
     IPAddress lightsIP[WIZ_MAX_LIGHTS];    // Stores light IP addresses
     bool      lightsValid[WIZ_MAX_LIGHTS]; // Stores light IP address validity (string is formatted light an IP address)
@@ -55,7 +51,7 @@ class WizLightsUsermod : public Usermod {
     }
 
     // Send JSON message to WiZ Light over UDP (RGB or C/W white)
-    void wizSendColor(IPAddress ip, uint8_t pix, uint32_t color, bool gammaCorrect) {
+    void wizSendColor(IPAddress ip, uint32_t color, uint8_t cct) {
       // Start UDP packet
       UDP.beginPacket(ip, 38899);
 
@@ -71,8 +67,8 @@ class WizLightsUsermod : public Usermod {
         
         // Linear blend of warm and cold white (to avoid overheating the light bulb)
         //   CCT: 0 - full warm white, 255 - full cold white
-        uint8_t ww = ((255 - seg.cct) * w) / 255;
-        uint8_t cw = (seg.cct * w) / 255;
+        uint8_t ww = ((255 - cct) * w) / 255;
+        uint8_t cw = (cct * w) / 255;
 
         // Send color information (red, green, blue, warm white, cold white)
         UDP.print("{\"method\":\"setPilot\",\"params\":{\"r\":");
@@ -118,7 +114,7 @@ class WizLightsUsermod : public Usermod {
 
           // Update Wiz light color, if necessary
           if (forceUpdate || (newColor != colorSent[i]) || (newCct != cctSent[i]) || (ellapsedTime > forceUpdateMinutes*60000)) {
-            wizSendColor(lightsIP[i], i, newColor, newCct);
+            wizSendColor(lightsIP[i], newColor, newCct);
             colorSent[i] = newColor;
             cctSent[i] = newCct;
             update = true;
@@ -135,9 +131,6 @@ class WizLightsUsermod : public Usermod {
       JsonObject top = root.createNestedObject("wizLightsUsermod");
       top["Interval (ms)"]                = updateInterval;
       top["Send Delay (ms)"]              = sendDelay;
-      top["Use Enhanced White *"]         = useEnhancedWhite;
-      top["* Warm White Value (0-255)"]   = warmWhite;
-      top["* Cold White Value (0-255)"]   = coldWhite;
       top["Always Force Update"]          = forceUpdate;
       top["Force Update Every x Minutes"] = forceUpdateMinutes;
       
@@ -153,9 +146,6 @@ class WizLightsUsermod : public Usermod {
 
       configComplete &= getJsonValue(top["Interval (ms)"],                updateInterval,     1000);  // How frequently to update the Wiz lights
       configComplete &= getJsonValue(top["Send Delay (ms)"],              sendDelay,          0);     // Optional delay after sending each UDP message
-      configComplete &= getJsonValue(top["Use Enhanced White *"],         useEnhancedWhite,   false); // When color is white, use Wiz white LEDs instead of mixing RGB
-      configComplete &= getJsonValue(top["* Warm White Value (0-255)"],   warmWhite,          0);     // Warm white LED value for enhanced white
-      configComplete &= getJsonValue(top["* Cold White Value (0-255)"],   coldWhite,          50);    // Cold white LED value for enhanced white
       configComplete &= getJsonValue(top["Always Force Update"],          forceUpdate,        false); // Update Wiz lights every loop, even if color value has not changed
       configComplete &= getJsonValue(top["Force Update Every x Minutes"], forceUpdateMinutes, 5);     // Update Wiz lights if color value has not changed, every x minutes
       
