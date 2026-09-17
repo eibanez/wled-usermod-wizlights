@@ -14,6 +14,7 @@ class WizLightsUsermod : public Usermod {
   private:
     unsigned long lastTime = 0;
 
+    uint16_t ledOffset;
     long updateInterval;
     long sendDelay;
     long forceUpdateMinutes;
@@ -107,10 +108,14 @@ class WizLightsUsermod : public Usermod {
           // Skip lights without a valid IP address
           if (!lightsValid[i]) continue;
 
+          // Calculate location of the pixel and make sure it stays within limit
+          uint16_t pixelIndex = i + ledOffset;
+          if (pixelIndex >= strip.getLengthTotal()) continue;
+          
           // Get color and CCT for this light
           uint32_t newColor;
           uint8_t newCct;
-          getPixelData(i, newColor, newCct);
+          getPixelData(pixelIndex, newColor, newCct);
 
           // Update Wiz light color, if necessary
           if (forceUpdate || (newColor != colorSent[i]) || (newCct != cctSent[i]) || (ellapsedTime > forceUpdateMinutes*60000)) {
@@ -129,6 +134,7 @@ class WizLightsUsermod : public Usermod {
     // Save configuration parameters
     void addToConfig(JsonObject& root) {
       JsonObject top = root.createNestedObject("wizLightsUsermod");
+      top["LED Offset"]                   = ledOffset;
       top["Interval (ms)"]                = updateInterval;
       top["Send Delay (ms)"]              = sendDelay;
       top["Always Force Update"]          = forceUpdate;
@@ -144,6 +150,7 @@ class WizLightsUsermod : public Usermod {
       JsonObject top = root["wizLightsUsermod"];
       bool configComplete = !top.isNull();
 
+      configComplete &= getJsonValue(top["LED Offset"],                   ledOffset,          0);     // Offset the "address" of the Wiz Lights for individual control
       configComplete &= getJsonValue(top["Interval (ms)"],                updateInterval,     1000);  // How frequently to update the Wiz lights
       configComplete &= getJsonValue(top["Send Delay (ms)"],              sendDelay,          0);     // Optional delay after sending each UDP message
       configComplete &= getJsonValue(top["Always Force Update"],          forceUpdate,        false); // Update Wiz lights every loop, even if color value has not changed
@@ -151,12 +158,23 @@ class WizLightsUsermod : public Usermod {
       
       // Read list of IPs
       String tempIp;
+      uint8_t n_lights = 0;
       for (uint8_t i = 0; i < WIZ_MAX_LIGHTS; i++) {
         configComplete &= getJsonValue(top[getJsonLabel(i)], tempIp, "0.0.0.0");
         lightsValid[i] = lightsIP[i].fromString(tempIp);
         
         // If the IP is not valid, force the value to be empty
-        if (!lightsValid[i]) lightsIP[i].fromString("0.0.0.0");
+        if (lightsValid[i]) {
+          n_lights++;
+        } else {
+          lightsIP[i].fromString("0.0.0.0");
+        }
+      }
+
+      // Validate the the offset and number of valid lights don't exceed the number of pixels in WLED
+      if (ledOffset + n_lights > strip.getLengthTotal()) {
+        ledOffset = 0;
+        configComplete = false;
       }
 
       return configComplete;
